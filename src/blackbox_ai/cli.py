@@ -6,6 +6,7 @@ Subcommands
 * ``gen-key``  - print a fresh base64 local KMS master key.
 * ``init``     - create encrypted collections, indexes, TTL, and the vector index.
 * ``search``   - run a vector "time-travel" search from the terminal.
+* ``export``   - export a captured interaction as a portable, replayable artifact.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from blackbox_ai.config import Settings, get_settings
 from blackbox_ai.db.mongo import create_client, ping
 from blackbox_ai.errors import GatewayError
 from blackbox_ai.logging import configure_logging, get_logger
+from blackbox_ai.replay import ReplayService
 from blackbox_ai.search import SearchMode, SearchService
 from blackbox_ai.security.encryption import generate_local_key
 
@@ -61,6 +63,30 @@ def build_parser() -> argparse.ArgumentParser:
     search.add_argument("--provider", default=None, help="Filter by provider name.")
     search.add_argument("--k", type=int, default=5, help="Number of results (default 5).")
     search.set_defaults(func=_cmd_search)
+
+    export = sub.add_parser(
+        "export", help="Export a captured interaction as a portable, replayable artifact."
+    )
+    export.add_argument("request_id", help="The X-Request-ID of the interaction to export.")
+    export.add_argument(
+        "--as",
+        dest="fmt",
+        choices=["payload", "request", "curl"],
+        default="payload",
+        help=(
+            "Output form: the verbatim request body (default), a full request "
+            "descriptor, or a ready-to-run curl against the gateway."
+        ),
+    )
+    export.add_argument(
+        "--gateway-url",
+        default="http://localhost:8000",
+        help="Gateway base URL used to render `--as curl` (default http://localhost:8000).",
+    )
+    export.add_argument(
+        "--token", default=None, help="x-gateway-token to embed in the rendered `--as curl`."
+    )
+    export.set_defaults(func=_cmd_export)
 
     return parser
 
@@ -99,6 +125,12 @@ def _cmd_search(args: argparse.Namespace) -> None:
     settings = get_settings()
     configure_logging(level=settings.log_level, json_logs=settings.log_json)
     asyncio.run(_run_search(settings, args))
+
+
+def _cmd_export(args: argparse.Namespace) -> None:
+    settings = get_settings()
+    configure_logging(level=settings.log_level, json_logs=settings.log_json)
+    asyncio.run(_run_export(settings, args))
 
 
 async def _run_init(settings: Settings) -> None:
@@ -157,16 +189,44 @@ async def _run_search(settings: Settings, args: argparse.Namespace) -> None:
             )
         except GatewayError as exc:
             _fail(exc.message)
-        payload = {
-            "query": args.query,
-            "mode": results.mode.value,
-            "count": len(results.hits),
-            "results": [{"score": hit.score, **hit.document} for hit in results.hits],
-        }
-        sys.stdout.buffer.write(orjson.dumps(payload, option=orjson.OPT_INDENT_2))
-        sys.stdout.buffer.write(b"\n")
+        _dump_json(
+            {
+                "query": args.query,
+                "mode": results.mode.value,
+                "count": len(results.hits),
+                "results": [{"score": hit.score, **hit.document} for hit in results.hits],
+            }
+        )
     finally:
         await client.close()
+
+
+async def _run_export(settings: Settings, args: argparse.Namespace) -> None:
+    try:
+        encryption = build_encryption_manager(settings)
+    except ValueError as exc:
+        _fail(f"Encryption is enabled but misconfigured: {exc}")
+    # Read through the encrypting client so the captured raw_payload is decrypted.
+    client = encryption.build_encrypting_client() if encryption else create_client(settings)
+    try:
+        service = ReplayService(client[settings.mongo_db][settings.mongo_collection])
+        try:
+            artifact = await service.fetch(args.request_id)
+        except GatewayError as exc:
+            _fail(exc.message)
+        if args.fmt == "curl":
+            print(artifact.as_curl(base_url=args.gateway_url, token=args.token))
+        elif args.fmt == "request":
+            _dump_json(artifact.as_dict())
+        else:  # payload: the verbatim request body, ready to replay as you wish.
+            _dump_json(artifact.raw_payload)
+    finally:
+        await client.close()
+
+
+def _dump_json(value: object) -> None:
+    sys.stdout.buffer.write(orjson.dumps(value, option=orjson.OPT_INDENT_2))
+    sys.stdout.buffer.write(b"\n")
 
 
 def _fail(message: str) -> NoReturn:

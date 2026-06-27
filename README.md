@@ -255,9 +255,10 @@ make test-int    # integration tests (set MONGO_TEST_URI)
 src/blackbox_ai/
   main.py            # app factory + lifespan (Mongo, pipeline, HTTP client)
   bootstrap.py       # shared component construction for server + CLI
-  cli.py             # serve / gen-key / init / search dispatcher
+  cli.py             # serve / gen-key / init / search / export dispatcher
   config.py          # pydantic-settings configuration
   search.py          # vector + hybrid ($rankFusion) search (auto-decrypts under QE)
+  replay.py          # export a captured interaction as a portable, re-runnable artifact
   providers/         # ProviderConfig, catalog, registry (one entry per backend)
   proxy/             # the generic fail-open relay + streaming tee (data plane)
   telemetry/         # capture buffer, queue/workers, parsers, embeddings, sink
@@ -430,6 +431,37 @@ master_key = {"keyId": "1"}
 
 Everything else - encrypted collections, DEK bootstrap, the encrypting client -
 stays identical; only the KMS provider and master key change.
+
+## 4. Portable replay artifacts
+
+Capturing intent is only half the value - you also want to **own and replay** it.
+Every interaction is exportable as a self-contained, re-runnable artifact: the
+exact provider, path, and verbatim (decrypted) request body.
+
+```bash
+blackbox-ai export <request_id>             # the verbatim request body (decrypted)
+blackbox-ai export <request_id> --as curl   # a ready-to-run request against the gateway
+```
+
+Or over the admin API (guarded by `GATEWAY_ADMIN_TOKEN`):
+
+```bash
+curl -s http://localhost:8000/admin/intents/<request_id>/replay \
+  -H "X-Admin-Token: $GATEWAY_ADMIN_TOKEN"
+```
+
+- **Export, not auto-replay**: the gateway hands you the artifact and never
+  re-issues it - a captured agent request can carry destructive tool calls
+  (`edit_file`, `delete`), so re-running one is always a deliberate human action.
+  The data plane stays a witness that touches nothing.
+- **Two honest tiers of replay**: feeding the verbatim payload to a cheaper /
+  newer / open-source model reproduces the *inputs* exactly (the *output* is a
+  fresh generation - the lock-in escape hatch). The only byte-for-byte
+  deterministic replay is the exact-match response [cache](#2-token-caching-exact-match-opt-in).
+- **Read-only & decrypt-on-read**: `export` reads through the encrypting client,
+  so `raw_payload` comes back as plaintext while staying ciphertext at rest. The
+  original query string is not captured, so providers that carry parameters in
+  the URL (e.g. Gemini's `alt=sse`) may need it re-added.
 
 ## Phase 4 configuration
 

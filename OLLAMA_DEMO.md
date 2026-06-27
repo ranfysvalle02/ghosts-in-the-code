@@ -132,4 +132,41 @@ Latency: 11828.28 ms
 Owning your own AI 'intent' data ensures control over how user goals and behaviors are interpreted, enabling ethical customization, privacy protection, and competitive advantage in AI-driven interactions.
 ```
 
+## 5. Replay: Export the Interaction as a Portable Artifact
+
+Capturing the intent is only half the value — you also want to **own and replay** it. The gateway never re-issues a request itself (a captured agent request could carry destructive tool calls), so instead it hands you the verbatim, decrypted inputs as a self-contained, re-runnable artifact.
+
+Every interaction carries an `X-Request-ID` (returned on the response and stored on the document). Use it to export:
+
+```bash
+# The verbatim request body (decrypted), ready to replay however you like
+docker compose exec gateway blackbox-ai export <request_id>
+
+# Or render a ready-to-run curl against the gateway
+docker compose exec gateway blackbox-ai export <request_id> --as curl --token demo-gateway-token
+```
+
+**`--as curl` output:**
+
+```bash
+curl -X POST http://localhost:8000/ollama/api/chat \
+  -H 'content-type: application/json' \
+  -H 'x-project-id: blackbox-ai-demo' \
+  -H 'x-agent-session: demo-session-001' \
+  -H 'x-developer-id: demo-engineer' \
+  -H 'x-gateway-token: demo-gateway-token' \
+  --data '{"model":"qwen3:14b","stream":true,"messages":[{"role":"user","content":"In one sentence, why does owning your own AI '"'"'intent'"'"' data matter?"}],"tools":[]}'
+```
+
+> Note how the apostrophe in `'intent'` is shell-escaped automatically — `export` quotes every dynamic part, so prompts containing quotes, spaces, or newlines round-trip safely.
+
+This is the **portability** payoff: you can pipe that exact payload into a **cheaper, newer, or open-source model** (just change the provider/model), into an eval suite, or into a regression test. You reproduce the *inputs* exactly — the *output* is a fresh generation. (The only byte-for-byte deterministic replay is the exact-match response cache.)
+
+The same artifact is available over the admin API:
+
+```bash
+curl -s http://localhost:8000/admin/intents/<request_id>/replay \
+  -H "X-Admin-Token: $GATEWAY_ADMIN_TOKEN"
+```
+
 The gateway successfully captured the full context of the interaction without ever exposing the sensitive prompt or response to the database in plaintext.

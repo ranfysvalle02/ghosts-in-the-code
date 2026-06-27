@@ -1,7 +1,8 @@
-"""Admin API: vector "time-travel" search over captured intent.
+"""Admin API: vector "time-travel" search and portable replay export.
 
-Guarded by ``GATEWAY_ADMIN_TOKEN``. When the token is unset the endpoint is
-disabled (503) so a misconfiguration never exposes telemetry unauthenticated.
+Both endpoints are guarded by ``GATEWAY_ADMIN_TOKEN``. When the token is unset
+they are disabled (503) so a misconfiguration never exposes telemetry
+unauthenticated.
 """
 
 from __future__ import annotations
@@ -62,5 +63,25 @@ async def admin_search(request: Request, body: SearchRequest) -> Response:
         "mode": results.mode.value,
         "count": len(results.hits),
         "results": [{"score": hit.score, **hit.document} for hit in results.hits],
+    }
+    return Response(content=orjson.dumps(payload), media_type="application/json")
+
+
+@router.get("/intents/{request_id}/replay")
+async def export_replay_artifact(request: Request, request_id: str) -> Response:
+    """Return the portable replay artifact (verbatim, decrypted inputs) for one interaction.
+
+    This is an *export*, not an action: the gateway never re-issues the request.
+    The artifact carries everything needed to replay it yourself - including a
+    ready-to-run ``curl`` against this gateway.
+    """
+    state = _state(request)
+    require_admin_token(request, state.settings)
+    if state.replay_service is None:
+        raise SearchUnavailableError("Replay export is unavailable (no MongoDB connection).")
+    artifact = await state.replay_service.fetch(request_id)
+    payload = {
+        **artifact.as_dict(),
+        "curl": artifact.as_curl(base_url=str(request.base_url)),
     }
     return Response(content=orjson.dumps(payload), media_type="application/json")

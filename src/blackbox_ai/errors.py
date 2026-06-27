@@ -13,6 +13,7 @@ from typing import Any
 __all__ = [
     "AuthenticationError",
     "GatewayError",
+    "IntentNotFoundError",
     "ProviderNotConfiguredError",
     "RateLimitExceededError",
     "RequestTooLargeError",
@@ -101,6 +102,13 @@ class SearchUnavailableError(GatewayError):
 
     status_code = 503
     code = "search_unavailable"
+
+
+class IntentNotFoundError(GatewayError):
+    """No captured interaction matches the requested ``request_id``."""
+
+    status_code = 404
+    code = "intent_not_found"
 
 
 class ServiceOverloadedError(GatewayError):

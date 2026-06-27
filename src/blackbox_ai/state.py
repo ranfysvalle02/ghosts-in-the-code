@@ -16,6 +16,7 @@ from blackbox_ai.telemetry.pipeline import TelemetryPipeline
 
 if TYPE_CHECKING:
     from blackbox_ai.cache.store import CacheStore
+    from blackbox_ai.replay import ReplayService
     from blackbox_ai.search import SearchService
     from blackbox_ai.security.encryption import EncryptionManager
 
@@ -36,4 +37,5 @@ class AppState:
     # Phase 4 (optional, depending on configuration).
     cache_store: CacheStore | None = None
     search_service: SearchService | None = None
+    replay_service: ReplayService | None = None
     encryption: EncryptionManager | None = None

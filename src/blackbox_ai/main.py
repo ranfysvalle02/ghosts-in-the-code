@@ -32,6 +32,7 @@ from blackbox_ai.metrics import register_pipeline_collector, unregister_pipeline
 from blackbox_ai.middleware.context import RequestContextMiddleware
 from blackbox_ai.providers.registry import build_registry
 from blackbox_ai.proxy.relay import Relay
+from blackbox_ai.replay import ReplayService
 from blackbox_ai.search import SearchService
 from blackbox_ai.state import AppState
 from blackbox_ai.telemetry.parsers import build_parser_registry
@@ -141,6 +142,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             search_index_name=settings.search_index_name,
         )
 
+    # Read-only export of verbatim, decrypted inputs (decrypts via `collection`).
+    replay_service = ReplayService(collection)
+
     app.state.gateway = AppState(
         settings=settings,
         registry=registry,
@@ -151,6 +155,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         collection=collection,
         cache_store=cache_store,
         search_service=search_service,
+        replay_service=replay_service,
         encryption=encryption,
     )
     _log.info(

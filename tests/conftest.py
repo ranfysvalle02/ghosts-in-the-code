@@ -103,6 +103,7 @@ async def build_harness(
     cache_store: object | None = None,
     embedder: Embedder | None = None,
     search_service: object | None = None,
+    replay_service: object | None = None,
 ) -> AsyncIterator[Harness]:
     """Assemble an app + clients around an injectable telemetry sink."""
     sink = sink or FakeSink()
@@ -140,6 +141,7 @@ async def build_harness(
         settings=settings,
         cache_store=cache_store,
         search_service=search_service,
+        replay_service=replay_service,
     )
 
     transport = httpx.ASGITransport(app=app)
@@ -168,6 +170,7 @@ class _GatewayStub:
     settings: object = field(default=None)
     cache_store: object = field(default=None)
     search_service: object = field(default=None)
+    replay_service: object = field(default=None)
     encryption: object = field(default=None)
 
 
