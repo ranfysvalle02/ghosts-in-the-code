@@ -179,9 +179,15 @@ class VoyageEmbedder:
 def embedding_text(doc: IntentDocument) -> str | None:
     """Pick the most semantically meaningful text to embed for a document.
 
-    Preference order mirrors the debugging use case: the model's hidden
-    reasoning best captures *why* it acted, then its visible output, then -
-    failing both (e.g. an error or unparsed response) - the user's prompt.
+    Preference order: the model's hidden reasoning, then its visible output,
+    then - failing both (e.g. an error or unparsed response) - the user's prompt.
+
+    This is the *convenient* signal, not the most trustworthy one. Embedding the
+    chain-of-thought leans the search index on the model's **stated** rationale,
+    which is self-reported and uneven across providers (so document vectors aren't
+    strictly comparable). A hardened build would also embed the *objective*
+    artifacts (tool calls, diffs, params) as separate views. We ship the simple
+    version on purpose so the tradeoff is visible - see ``docs/intent-is-biased.md``.
     """
     telemetry = doc.intent_telemetry
     if telemetry.chain_of_thought and telemetry.chain_of_thought.strip():

@@ -55,7 +55,16 @@ class Performance(BaseModel):
 
 
 class IntentTelemetry(BaseModel):
-    """The distilled 'why' behind an interaction, extracted from the response."""
+    """The distilled telemetry of one interaction: what the model said, what it
+    *did* (tool calls), and the reasoning it narrated.
+
+    Read this as a *decision record*, not a confession. ``chain_of_thought`` is
+    the model's **stated** rationale - self-reported, sometimes unfaithful to what
+    actually drove the output, and unevenly exposed across providers. The
+    trustworthy signals are the objective ones (``tools_called``, plus the diff /
+    params captured elsewhere); the narrative is a lead. See
+    ``docs/intent-is-biased.md``.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -63,7 +72,11 @@ class IntentTelemetry(BaseModel):
         default=None, description="Assistant-visible output text, concatenated."
     )
     chain_of_thought: str | None = Field(
-        default=None, description="Hidden reasoning / thinking tokens, if exposed."
+        default=None,
+        description=(
+            "Hidden reasoning / thinking tokens, if exposed. Self-reported by the "
+            "model - treat as a lead, not ground truth (see docs/intent-is-biased.md)."
+        ),
     )
     tools_called: list[dict[str, Any]] = Field(default_factory=list)
     finish_reason: str | None = None

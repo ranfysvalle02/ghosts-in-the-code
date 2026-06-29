@@ -191,6 +191,14 @@ exposed any, otherwise its output, otherwise the user's prompt — using
 [Voyage AI](https://www.voyageai.com/) (a MongoDB company; `voyage-code-3` is
 tuned for code and agent intent). That vector is stored right on the document.
 
+A caveat worth stating plainly: embedding the model's reasoning means your search
+index leans on the model's *stated* rationale, which is self-reported and can be
+unfaithful to what actually drove the output (and varies in fidelity across
+providers). It's the convenient signal, not the trustworthy one. In a serious
+build you'd also embed the *objective* artifacts — the tool calls, the diff, the
+parameters — so a query can land on what the model *did*, not just the story it
+told. We dig into this in `docs/intent-is-biased.md`.
+
 Then "find me moments like this" is one aggregation stage:
 
 ```python
@@ -381,5 +389,13 @@ agent platform, an internal proxy — start with the two-plane split, pick a dat
 layer that won't fight your schema, and make the secure default the easy one.
 The rest is surprisingly little code.
 
+One honest disclaimer: this is a **reference architecture, not a production
+service**. It's complete, tested, and runnable — but to put something like it on
+the critical path for real you'd still need an explicit added-overhead SLO and
+the horizontal scale to hold it, SSO/RBAC plus audit logs of who read the
+(decrypted) prompts, a managed KMS instead of a local key, PII/secret redaction,
+and proper multi-tenancy and HA. Those are deliberately left as the next mile.
+
 *The full implementation, with tests and a one-command Docker setup, is in the
-[Ghosts in the Code](./blog.md) project.*
+[Ghosts in the Code](./blog.md) project — work through `steps/` to build it up
+layer by layer.*

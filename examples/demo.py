@@ -10,7 +10,7 @@ keys you have, then::
     uv run --extra examples python examples/demo.py
 
 Only providers whose credentials are present are exercised; the rest are
-skipped. Each call sends the sovereign metadata headers so the captured Intent
+skipped. Each call sends grouping metadata headers so the captured Intent
 Documents are grouped by project / session / developer.
 """
 

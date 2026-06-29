@@ -1,7 +1,7 @@
 [project]
 name = "blackbox-ai"
 version = "0.1.0"
-description = "Blackbox AI: a native pass-through LLM proxy that captures polymorphic coding-intent telemetry into MongoDB, out-of-band and fail-open."
+description = "Ghosts in the Code: an educational reference project that builds a native pass-through LLM gateway, recording polymorphic coding-intent telemetry into MongoDB out-of-band and fail-open."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }

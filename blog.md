@@ -166,16 +166,20 @@ That's not a feature checklist. That's *fewer things that can break*. And in a s
 
 ---
 
+## One honest caveat about the "why"
+
+Before the triumphant ending, the asterisk this whole genre usually skips: the chain-of-thought you so carefully captured is the model's *stated* reasoning, not a transcript of the computation that actually produced the code. Models are demonstrably capable of giving you a fluent, plausible rationale that isn't the real cause — and providers expose this reasoning unevenly (some raw, some summarized, some not at all). So what you've really recorded is a **decision record**: the inputs, the actions the model took (the tool calls, the diff), and the story it told about them. The objective parts are trustworthy; the narrative is a *lead*, not a confession. Treat it that way and the black box gets more useful, not less — you debug from the actions and use the story to point you at them. (The honest version of all this lives in `docs/intent-is-biased.md`.)
+
 ## The point of remembering
 
-So let's go back to 2:47am, one more time. But this time, you built the black box.
+So let's go back to 2:47am, one more time. But this time, you built the black box — and you understand it end to end, because you built every layer of it yourself.
 
-The phone still lights up. Production is still down. The mystery service is still a mystery. But now you walk up to your own database — the one that's been quietly recording every ghost that ever passed through your code — and you simply *ask*. In plain language. About a feeling. And it walks you straight to the moment the agent reasoned its way into the bug, in its own words, decrypted just for you, found by meaning instead of luck.
+The phone still lights up. Production is still down. The mystery service is still a mystery. But now you walk up to your own database — the one that's been quietly recording every interaction that ever passed through your code — and you simply *ask*. In plain language. About a feeling. And it walks you to the moment the agent narrated its way into the bug, in its own words, decrypted just for you, found by meaning instead of luck. From there you check what it *actually did* — the diff, the tool calls — and you have your answer.
 
-You don't pray to a vendor's walled garden for the context. You own it. Which means the day a better, cheaper, faster model shows up, you don't start over — you replay your entire history into the new one and it inherits everything your codebase has ever known. The ghosts work for you now.
+And because the record is yours, the day a better, cheaper, faster model shows up you can replay your captured inputs into it instead of starting over. The point was never to trust the ghost; it was to keep the footage.
 
-We spent a decade learning to record *what* our code does. The age of AI demands we record *why*. The "what" was always going to fit in rigid little rows. The "why" — shape-shifting, meaning-laden, secret, and vast — was always going to need somewhere more honest to live.
+We spent a decade learning to record *what* our code does. The age of AI pushes us to also record *why it said it did it*. The "what" was always going to fit in rigid little rows. The "why" — shape-shifting, meaning-laden, secret, and vast — was always going to need somewhere more honest to live.
 
 It needed a place that could be a shapeshifter, a mind-reading librarian, a self-cleaning cupboard, and an unbreakable safe — all at once, all in one box.
 
-That's the box. Go build your black box before your next 2:47am, not after it.
+That's the box. This repo is a worked, runnable example of building it — go work through `steps/` and build your own before your next 2:47am, not after it.

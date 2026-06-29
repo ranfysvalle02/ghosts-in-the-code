@@ -34,7 +34,7 @@ make init
 
 ## 3. Run the Demo Script
 
-The `examples/demo.py` script uses the native Ollama Python SDK, but points it at the gateway instead of directly at Ollama. It also injects sovereign metadata headers (`x-project-id`, `x-agent-session`, `x-developer-id`).
+The `examples/demo.py` script uses the native Ollama Python SDK, but points it at the gateway instead of directly at Ollama. It also injects grouping metadata headers (`x-project-id`, `x-agent-session`, `x-developer-id`) so captured Intent Documents can be grouped by project / session / developer.
 
 Since Ollama is running on your host machine and the gateway is running in Docker, we need to tell the gateway how to reach Ollama by setting `OLLAMA_BASE_URL` in the `.env` file or inline.
 

@@ -1,5 +1,12 @@
 # Security Policy
 
+> **This is an educational reference project, not a maintained product**, and it
+> ships with no SLA or guarantee of support. Treat it as a learning artifact:
+> read the code, run it locally, learn from it — but do not deploy it as-is on a
+> production critical path (see *Reference architecture, not production* in the
+> [README](README.md)). Reports are still welcome and we'll do our best, on a
+> best-effort basis.
+
 ## Reporting a vulnerability
 
 Please report security issues **privately** — do not open a public issue for
@@ -14,11 +21,12 @@ to ship a fix before disclosing publicly. We're happy to credit reporters.
 
 ## Scope
 
-This gateway sits on the critical path between your apps and model providers and
-handles sensitive prompt/response data, so we take its posture seriously. In
-scope: the relay, telemetry pipeline, authentication, encryption wiring, and
-secret handling. Out of scope: vulnerabilities in upstream providers, MongoDB
-itself, or third-party dependencies (report those to their maintainers).
+This gateway is *designed* to sit on the critical path between apps and model
+providers and to handle sensitive prompt/response data, so even as a reference it
+aims to model a sound security posture. In scope: the relay, telemetry pipeline,
+authentication, encryption wiring, and secret handling. Out of scope:
+vulnerabilities in upstream providers, MongoDB itself, or third-party
+dependencies (report those to their maintainers).
 
 ## Security posture
 
